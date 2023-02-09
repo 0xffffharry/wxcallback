@@ -21,13 +21,15 @@ var runCommand = &cobra.Command{
 }
 
 var (
-	paramConfig string
-	paramDebug  bool
+	paramConfig  string
+	paramLogFile string
+	paramDebug   bool
 )
 
 func init() {
 	RootCommand.AddCommand(runCommand)
 	runCommand.PersistentFlags().StringVarP(&paramConfig, "config", "c", "config.json", "Config File")
+	runCommand.PersistentFlags().StringVarP(&paramLogFile, "log", "l", "", "Log File")
 	runCommand.PersistentFlags().BoolVarP(&paramDebug, "debug", "d", false, "Debug Mode")
 }
 
@@ -36,6 +38,20 @@ func run() int {
 	logger.SetDebug(paramDebug)
 	logger.Info("Global", fmt.Sprintf("version %s", Version))
 	defer logger.Info("Global", "Bye!!")
+	if paramLogFile != "" {
+		f, err := os.OpenFile(paramLogFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+		if err != nil {
+			logger.Fatal("Global", fmt.Sprintf("open log file fail: %s", err.Error()))
+			return 1
+		}
+		defer func() {
+			f.Close()
+			logger.SetOutput(os.Stdout)
+			logger.Info("Global", "close log file")
+		}()
+		logger.Info("Global", fmt.Sprintf("write log to file: %s", paramLogFile))
+		logger.SetOutput(f)
+	}
 	f, err := os.ReadFile(paramConfig)
 	if err != nil {
 		logger.Fatal("Global", err.Error())
