@@ -1,0 +1,12 @@
+[Unit]
+Description=Wechat Callback Background
+ConditionFileIsExecutable=/usr/bin/wxcallback
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/wxcallback run -c /etc/wxcallback/config.json
+Restart=always
+RestartSec=3s
+
+[Install]
+WantedBy=multi-user.target
