@@ -7,7 +7,6 @@ import (
 	"encoding/xml"
 	"fmt"
 	"net/http"
-	"net/url"
 	"strconv"
 	"time"
 	"wxcallback/lib/wxbizjsonmsgcrypt"
@@ -27,10 +26,14 @@ type MsgContent struct {
 }
 
 func (s *Server) handler(w http.ResponseWriter, r *http.Request, flag string, service Service) {
+	if r.Method != http.MethodGet && r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		w.Write([]byte("405 Method Not Allowed"))
+		return
+	}
 	urlValues := r.URL.Query()
 	if service.VerifyUrl && urlValues.Get("echostr") != "" {
-		wxCrypt := wxbizjsonmsgcrypt.NewWXBizMsgCrypt(service.Token, service.EncodingAesKey, service.AppID, wxbizjsonmsgcrypt.JsonType)
-		s.handlerVerify(w, r, urlValues, wxCrypt, flag, service)
+		s.handlerVerify(w, r, flag, service)
 		return
 	}
 	wxCrypt := wxbizjsonmsgcrypt.NewWXBizMsgCrypt(service.Token, service.EncodingAesKey, service.AppID, wxbizjsonmsgcrypt.XMLType)
@@ -67,13 +70,15 @@ func (s *Server) handler(w http.ResponseWriter, r *http.Request, flag string, se
 	w.WriteHeader(http.StatusOK)
 }
 
-func (s *Server) handlerVerify(w http.ResponseWriter, r *http.Request, urlValues url.Values, wxCrypt *wxbizjsonmsgcrypt.WXBizMsgCrypt, flag string, service Service) {
+func (s *Server) handlerVerify(w http.ResponseWriter, r *http.Request, flag string, service Service) {
+	urlValues := r.URL.Query()
 	var (
 		verifyMsgSign   = urlValues.Get("msg_signature")
 		verifyTimestamp = urlValues.Get("timestamp")
 		verifyNonce     = urlValues.Get("nonce")
 		verifyEchoStr   = urlValues.Get("echostr")
 	)
+	wxCrypt := wxbizjsonmsgcrypt.NewWXBizMsgCrypt(service.Token, service.EncodingAesKey, service.AppID, wxbizjsonmsgcrypt.JsonType)
 	echoStr, cryptErr := wxCrypt.VerifyURL(verifyMsgSign, verifyTimestamp, verifyNonce, verifyEchoStr)
 	if cryptErr != nil {
 		s.logger.Error(flag, fmt.Sprintf("verifyURL fail: [%s] %s", strconv.Itoa(cryptErr.ErrCode), cryptErr.ErrMsg))
