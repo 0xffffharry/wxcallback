@@ -25,7 +25,7 @@ type MsgContent struct {
 	Agentid      uint32 `json:"AgentId,omitempty" xml:"AgentId,omitempty"`
 }
 
-func (s *Server) handler(w http.ResponseWriter, r *http.Request, flag string, service Service) {
+func (s *Server) handler(w http.ResponseWriter, r *http.Request, flag string, service *Service) {
 	if r.Method != http.MethodGet && r.Method != http.MethodPost {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		w.Write([]byte("405 Method Not Allowed"))
@@ -70,7 +70,7 @@ func (s *Server) handler(w http.ResponseWriter, r *http.Request, flag string, se
 	w.WriteHeader(http.StatusOK)
 }
 
-func (s *Server) handlerVerify(w http.ResponseWriter, r *http.Request, flag string, service Service) {
+func (s *Server) handlerVerify(w http.ResponseWriter, r *http.Request, flag string, service *Service) {
 	urlValues := r.URL.Query()
 	var (
 		verifyMsgSign   = urlValues.Get("msg_signature")
@@ -91,7 +91,7 @@ func (s *Server) handlerVerify(w http.ResponseWriter, r *http.Request, flag stri
 	}
 }
 
-func (s *Server) callback(flag string, msgContent MsgContent, service Service) {
+func (s *Server) callback(flag string, msgContent MsgContent, service *Service) {
 	rawContent, err := json.Marshal(msgContent)
 	if err != nil {
 		s.logger.Error(flag, fmt.Sprintf("marshal msgContent fail: %s", err))

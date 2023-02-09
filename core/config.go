@@ -11,9 +11,9 @@ import (
 )
 
 type Config struct {
-	Mode    string                  `json:"mode,omitempty"`
-	Listen  string                  `json:"listen,omitempty"`
-	Service types.Listable[Service] `json:"service,omitempty"`
+	Mode    string                   `json:"mode,omitempty"`
+	Listen  string                   `json:"listen,omitempty"`
+	Service types.Listable[*Service] `json:"service,omitempty"`
 }
 
 type Service struct {
@@ -52,7 +52,7 @@ func checkConfig(_c *_config) error {
 			return fmt.Errorf("service is empty")
 		}
 		checkMap := make(map[string]int)
-		services := make(types.Listable[Service], 0)
+		services := make(types.Listable[*Service], 0)
 		for _, service := range _c.Service {
 			if service.Listen == "" {
 				return fmt.Errorf("listen is empty")
@@ -108,7 +108,7 @@ func checkConfig(_c *_config) error {
 			return fmt.Errorf("service is empty")
 		}
 		checkMap := make(map[string]int)
-		services := make(types.Listable[Service], 0)
+		services := make(types.Listable[*Service], 0)
 		for _, service := range _c.Service {
 			if service.Path != "" {
 				if service.Path[0] != '/' {

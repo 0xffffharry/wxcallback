@@ -49,7 +49,7 @@ func (s *Server) runForPort() {
 	wg := sync.WaitGroup{}
 	for _, service := range s.config.Service {
 		wg.Add(1)
-		go func(service Service) {
+		go func(service *Service) {
 			defer wg.Done()
 			httpServer := &http.Server{}
 			httpServer.Addr = s.config.Listen
@@ -80,14 +80,17 @@ func (s *Server) runForPath() {
 	httpServerMux := &http.ServeMux{}
 	rootPathTag := false
 	for _, service := range s.config.Service {
-		if service.Path == "/" {
-			rootPathTag = true
-		}
-		s.logger.Info("Server", fmt.Sprintf("Add Service, Path: %s", service.Path))
-		flag := fmt.Sprintf("Server - %s: %s", "Path", service.Path)
-		httpServerMux.HandleFunc(service.Path, func(w http.ResponseWriter, r *http.Request) {
-			s.handler(w, r, flag, service)
-		})
+		func(service *Service) {
+			if service.Path == "/" {
+				rootPathTag = true
+			}
+			s.logger.Info("Server", fmt.Sprintf("Add Service, Path: %s", service.Path))
+			flag := fmt.Sprintf("Server - %s: %s", "Path", service.Path)
+			httpServerMux.HandleFunc(service.Path, func(w http.ResponseWriter, r *http.Request) {
+				s.handler(w, r, flag, service)
+			})
+		}(service)
+
 	}
 	if !rootPathTag {
 		httpServerMux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
